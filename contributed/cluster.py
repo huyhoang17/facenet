@@ -148,8 +148,14 @@ def align_data(image_list, image_size, margin, pnet, rnet, onet):
 
 def create_network_face_detection(gpu_memory_fraction):
     with tf.Graph().as_default():
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=gpu_memory_fraction)
-        sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, log_device_placement=False))
+        gpu_options = tf.GPUOptions(
+            per_process_gpu_memory_fraction=gpu_memory_fraction
+        )
+        sess = tf.Session(
+            config=tf.ConfigProto(
+                gpu_options=gpu_options, log_device_placement=False
+            )
+        )
         with sess.as_default():
             pnet, rnet, onet = align.detect_face.create_mtcnn(sess, None)
     return pnet, rnet, onet
@@ -167,8 +173,11 @@ def load_images_from_folder(folder):
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('model', type=str,
-                        help='Either a directory containing the meta_file and ckpt_file or a model protobuf (.pb) file')
+    parser.add_argument(
+        'model', type=str,
+        help='Either a directory containing the meta_file and ckpt_file or \
+        a model protobuf (.pb) file'
+    )
     parser.add_argument('data_dir', type=str,
                         help='The directory containing the images to cluster into folders.')
     parser.add_argument('out_dir', type=str,

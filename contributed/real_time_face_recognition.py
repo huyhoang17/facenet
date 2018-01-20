@@ -1,29 +1,7 @@
-# coding=utf-8
 """Performs face detection in realtime.
 
 Based on code from https://github.com/shanren7/real_time_face_recognition
 """
-# MIT License
-#
-# Copyright (c) 2017 François Gervais
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 import argparse
 import sys
 import time
@@ -35,13 +13,13 @@ import face
 
 def add_overlays(frame, faces, frame_rate):
     if faces is not None:
-        for face in faces:
-            face_bb = face.bounding_box.astype(int)
+        for face_ in faces:
+            face_bb = face_.bounding_box.astype(int)
             cv2.rectangle(frame,
                           (face_bb[0], face_bb[1]), (face_bb[2], face_bb[3]),
                           (0, 255, 0), 2)
-            if face.name is not None:
-                cv2.putText(frame, face.name, (face_bb[0], face_bb[3]),
+            if face_.name is not None:
+                cv2.putText(frame, face_.name, (face_bb[0], face_bb[3]),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0),
                             thickness=2, lineType=2)
 

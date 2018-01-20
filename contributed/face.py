@@ -1,35 +1,5 @@
 # coding=utf-8
 """Face Detection and Recognition"""
-# MIT License
-#
-# Copyright (c) 2017 François Gervais
-#
-# This is the work of David Sandberg and shanren7 remodelled into a
-# high level container. It's an attempt to simplify the use of such
-# technology and provide an easy to use facial recognition package.
-#
-# https://github.com/davidsandberg/facenet
-# https://github.com/shanren7/real_time_face_recognition
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-import pickle
 import os
 
 import cv2
@@ -42,11 +12,18 @@ import facenet
 
 
 gpu_memory_fraction = 0.3
-facenet_model_checkpoint = os.path.dirname(__file__) + \
-    "/../model_checkpoints/20170512-110547"
-classifier_model = os.path.dirname(__file__) + \
-    "/../model_checkpoints/my_classifier_1.pkl"
-debug = False
+facenet_model_checkpoint = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "models/20170512-110547"
+)
+classifier_model = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    "models/backup/knn_dump_updated.pkl"
+)
+label_model = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    "models/backup/model_updated.pkl"
+)
+debug = True
 
 
 class Face:
@@ -87,14 +64,20 @@ class Recognition:
 
 class Identifier:
     def __init__(self):
-        with open(classifier_model, 'rb') as infile:
-            self.model, self.class_names = pickle.load(infile)
+        from sklearn.externals import joblib
+        # with open(classifier_model, 'rb') as infile:
+        #     self.model, self.class_names = pickle.load(infile)
+        self.model = joblib.load(classifier_model)
+        _, self.class_names, _ = joblib.load(label_model)
 
     def identify(self, face):
+        # if face.embedding is not None:
+        #     predictions = self.model.predict_proba([face.embedding])
+        #     best_class_indices = np.argmax(predictions, axis=1)
+        #     return self.class_names[best_class_indices[0]]
         if face.embedding is not None:
-            predictions = self.model.predict_proba([face.embedding])
-            best_class_indices = np.argmax(predictions, axis=1)
-            return self.class_names[best_class_indices[0]]
+            predictions = self.model.predict([face.embedding])
+            return self.class_names[predictions[0]]
 
 
 class Encoder:

@@ -8,7 +8,6 @@ import numpy as np
 import facenet
 import align.detect_face
 from PIL import Image
-import os
 
 
 def main(args):
@@ -44,6 +43,7 @@ def main(args):
     print(bounding_boxes)
     nrof_faces = bounding_boxes.shape[0]
     print(nrof_faces)
+
     if nrof_faces > 0:
         det = bounding_boxes[:, 0:4]
         det_arr = []
@@ -90,11 +90,11 @@ def main(args):
             pil_image = Image.fromarray(face_image)
             # pil_image.save()
             pil_image.show()
-        main_image = Image.fromarray(img)
-        main_image.show()
-        import time
-        time.sleep(5)
-        main_image.close()
+        # main_image = Image.fromarray(img)
+        # main_image.show()
+        # import time
+        # time.sleep(5)
+        # main_image.close()
     else:
         print('Unable to align')
 

@@ -1,0 +1,3 @@
+/home/phanhoang/Desktop/test_align/Phan_Hoang/Phan_Hoang.png 126 142 328 419
+/home/phanhoang/Desktop/test_align/Phan_Hoang/phh.png 855 527 1214 958
+/home/phanhoang/Desktop/test_align/Phan_Hoang/FB_IMG_1475566489140.png 285 170 438 348

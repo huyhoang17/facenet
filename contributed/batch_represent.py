@@ -1,10 +1,15 @@
-#!/usr/bin/env python
-# coding=utf-8
+import os
+import sys
+import argparse
+# import importlib
+import time
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
+sys.path.insert(1, "../src")
+import facenet
+import numpy as np
+from sklearn.datasets import load_files
+import tensorflow as tf
+from six.moves import xrange
 """
 Allows you to generate embeddings from a directory of images in the format:
 
@@ -31,7 +36,7 @@ in the same directory, and the metagraph should have the extension '.meta'.
 
 ####
 USAGE:
-$ python batch_represent.py -d <YOUR IMAGE DATA DIRECTORY> -o <DIRECTORY TO STORE OUTPUT ARRAYS> --trained_model_dir <DIRECTORY CONTAINING PRETRAINED MODEL>
+$ python3 batch_represent.py -d <YOUR IMAGE DATA DIRECTORY> -o <DIRECTORY TO STORE OUTPUT ARRAYS> --trained_model_dir <DIRECTORY CONTAINING PRETRAINED MODEL>  # noqa
 ###
 """
 
@@ -41,57 +46,19 @@ The code is heavily inspired by the code from by David Sandberg's ../src/validat
 The concept is inspired by Brandon Amos' github.com/cmusatyalab/openface/blob/master/batch-represent/batch-represent.lua
 """
 
-#----------------------------------------------------
-# MIT License
-#
-# Copyright (c) 2017 Rakshak Talwar
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# ----------------------------------------------------
-
-import os
-import sys
-import argparse
-# import importlib
-import time
-
-sys.path.insert(1, "../src")
-import facenet
-import numpy as np
-from sklearn.datasets import load_files
-import tensorflow as tf
-from six.moves import xrange
-
 
 def main(args):
 
     with tf.Graph().as_default():
         with tf.Session() as sess:
-            # create output directory if it doesn't exist
             output_dir = os.path.expanduser(args.output_dir)
             if not os.path.isdir(output_dir):
                 os.makedirs(output_dir)
 
-            # load the model
             print("Loading trained model...\n")
             meta_file, ckpt_file = facenet.get_model_filenames(
-                os.path.expanduser(args.trained_model_dir))
+                os.path.expanduser(args.trained_model_dir)
+            )
             facenet.load_model(args.trained_model_dir, meta_file, ckpt_file)
 
             # grab all image paths and labels
@@ -101,9 +68,12 @@ def main(args):
             paths = data['filenames']
 
             # Get input and output tensors
-            images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
-            embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
-            phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
+            images_placeholder = \
+                tf.get_default_graph().get_tensor_by_name("input:0")
+            embeddings = \
+                tf.get_default_graph().get_tensor_by_name("embeddings:0")
+            phase_train_placeholder = \
+                tf.get_default_graph().get_tensor_by_name("phase_train:0")
 
             image_size = images_placeholder.get_shape()[1]
             embedding_size = embeddings.get_shape()[1]

@@ -1,4 +1,4 @@
-""" Face Cluster """
+""" Face Cluster using Chinese Whispers algorithms"""
 import tensorflow as tf
 import numpy as np
 # import importlib

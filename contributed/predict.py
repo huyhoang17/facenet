@@ -1,35 +1,3 @@
-
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-# ----------------------------------------------------
-# MIT License
-#
-# Copyright (c) 2017 Rishi Rai
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# ----------------------------------------------------
-
-
 import tensorflow as tf
 import numpy as np
 import argparse
@@ -78,7 +46,7 @@ def main(args):
             best_class_probabilities = predictions[np.arange(
                 len(best_class_indices)), best_class_indices]
             k = 0
-            # print predictions
+
             for i in range(nrof_samples):
                 print("\npeople in image %s :" % (args.image_files[i]))
                 for j in range(cout_per_image[i]):
@@ -98,7 +66,8 @@ def load_and_align_data(image_paths, image_size, margin, gpu_memory_fraction):
     print('Creating networks and loading parameters')
     with tf.Graph().as_default():
         gpu_options = tf.GPUOptions(
-            per_process_gpu_memory_fraction=gpu_memory_fraction)
+            per_process_gpu_memory_fraction=gpu_memory_fraction
+        )
         sess = tf.Session(config=tf.ConfigProto(
             gpu_options=gpu_options, log_device_placement=False))
         with sess.as_default():
@@ -131,21 +100,34 @@ def load_and_align_data(image_paths, image_size, margin, gpu_memory_fraction):
 
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument('image_files', type=str, nargs='+',
-                        help='Path(s) of the image(s)')
-    parser.add_argument('model', type=str,
-                        help='Could be either a directory containing the meta_file and ckpt_file or a model protobuf (.pb) file')
-    parser.add_argument('classifier_filename',
-                        help='Classifier model file name as a pickle (.pkl) file. ' +
-                        'For training this is the output and for classification this is an input.')
-    parser.add_argument('--image_size', type=int,
-                        help='Image size (height, width) in pixels.', default=160)
-    parser.add_argument('--seed', type=int,
-                        help='Random seed.', default=666)
-    parser.add_argument('--margin', type=int,
-                        help='Margin for the crop around the bounding box (height, width) in pixels.', default=44)
-    parser.add_argument('--gpu_memory_fraction', type=float,
-                        help='Upper bound on the amount of GPU memory that will be used by the process.', default=1.0)
+    parser.add_argument(
+        'image_files', type=str, nargs='+',
+        help='Path(s) of the image(s)'
+    )
+    parser.add_argument(
+        'model', type=str,
+        help='Could be either a directory containing the meta_file and ckpt_file or a model protobuf (.pb) file'  # noqa
+    )
+    parser.add_argument(
+        'classifier_filename',
+        help='Classifier model file name as a pickle (.pkl) file. For training this is the output and for classification this is an input.'  # noqa
+    )
+    parser.add_argument(
+        '--image_size', type=int,
+        help='Image size (height, width) in pixels.', default=160
+    )
+    parser.add_argument(
+        '--seed', type=int,
+        help='Random seed.', default=666
+    )
+    parser.add_argument(
+        '--margin', type=int,
+        help='Margin for the crop around the bounding box (height, width) in pixels.', default=44  # noqa
+    )
+    parser.add_argument(
+        '--gpu_memory_fraction', type=float,
+        help='Upper bound on the amount of GPU memory that will be used by the process.', default=0.25  # noqa
+    )
     return parser.parse_args(argv)
 
 

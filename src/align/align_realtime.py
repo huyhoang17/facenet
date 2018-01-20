@@ -29,7 +29,7 @@ def main(args):
 
     # Get a reference to webcam #0 (the default one)
     video_capture = cv2.VideoCapture(0)
-    while True and args.use_webcam:
+    while True:
         ret, img = video_capture.read()
         # ndarray
         # img = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
@@ -39,7 +39,6 @@ def main(args):
         if img.ndim == 2:
             img = facenet.to_rgb(img)
         img = img[:, :, 0:3]
-        print('=' * 30)
         print(img.ndim, img.shape)
 
         bounding_boxes, _ = align.detect_face.detect_face(
@@ -73,7 +72,7 @@ def main(args):
             else:
                 det_arr.append(np.squeeze(det))
 
-            print("det_arr", det_arr)
+            print(">>> det_arr", det_arr)
             for i, det in enumerate(det_arr):
                 det = np.squeeze(det)
                 bb = np.zeros(4, dtype=np.int32)
@@ -87,6 +86,7 @@ def main(args):
                 nrof_successfully_aligned += 1
 
                 # left, top, right, bottom
+                print("left, top, right, bottom")
                 print(bb[0], bb[1], bb[2], bb[3])
                 cv2.rectangle(img, (bb[0], bb[1]),
                               (bb[2], bb[3]), (0, 0, 255), 2)
@@ -104,7 +104,7 @@ def main(args):
             print('Unable to align')
 
         cv2.imshow('Video', img)
-        print("Show frame")
+        print("=" * 30)
 
         # Hit 'q' on the keyboard to quit!
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -118,14 +118,6 @@ def parse_arguments(argv):
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        '--input_dir', type=str,
-        help='Directory with unaligned images.'
-    )
-    parser.add_argument(
-        '--output_dir', type=str, default='.',
-        help='Directory with aligned face thumbnails.'
-    )
-    parser.add_argument(
         '--image_size', type=int,
         help='Image size (height, width) in pixels.', default=160
     )
@@ -134,20 +126,12 @@ def parse_arguments(argv):
         help='Margin for the crop around the bounding box (height, width) in pixels.', default=32  # noqa
     )
     parser.add_argument(
-        '--random_order',
-        help='Shuffles the order of images to enable alignment using multiple processes.', action='store_true'  # noqa
-    )
-    parser.add_argument(
         '--gpu_memory_fraction', type=float,
         help='Upper bound on the amount of GPU memory that will be used by the process.', default=0.25  # noqa
     )
     parser.add_argument(
         '--detect_multiple_faces', type=bool,
         help='Detect and align multiple faces per image.', default=False
-    )
-    parser.add_argument(
-        '--use_webcam', type=bool,
-        help='Use webcam to detect face realtime', default=False
     )
     return parser.parse_args(argv)
 

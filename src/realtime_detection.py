@@ -1,16 +1,20 @@
 """Performs face alignment and stores face thumbnails in the output directory.
 """
-# from scipy import misc
-import sys
 import argparse
-import tensorflow as tf
-import numpy as np
-import facenet
-import align.detect_face
-import cv2
 from scipy import misc
+import sys
 
+import cv2
+import numpy as np
+import tensorflow as tf
 from sklearn.externals import joblib
+
+import align.detect_face
+import facenet
+
+
+CONST_DIST = 1.2
+FRAME_INTERVAL = 3
 
 
 def main(args):
@@ -25,7 +29,7 @@ def main(args):
         )
         with sess.as_default():
             pnet, rnet, onet = align.detect_face.create_mtcnn(sess, None)
-            facenet.load_model(args.model)
+            facenet.load_model(args.model_trained)
 
             # Get input and output tensors
             images_placeholder = \
@@ -37,44 +41,33 @@ def main(args):
             # (?, 128)
             print(">>> Embedding size: ", embeddings.get_shape())
 
-            # test_image = facenet.load_test_data(
-            #     args.path_image, False, False, args.image_size
-            # )
-
-            _, class_names, _ = joblib.load(
+            labels, class_names, embed_arrays = joblib.load(
                 args.model_filename
             )
             # Classify images
             model = joblib.load(args.classifier_filename)
 
-            # ========================================================
-
+            # =================================================================
             minsize = 20  # minimum size of face
             threshold = [0.6, 0.7, 0.7]  # three steps's threshold
             factor = 0.709  # scale factor
 
             # Get a reference to webcam #0 (the default one)
             video_capture = cv2.VideoCapture(0)
-            while True and args.use_webcam:
+            while True:
                 ret, img = video_capture.read()
-                # ndarray
-                # img = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-
                 nrof_successfully_aligned = 0
 
                 if img.ndim == 2:
                     img = facenet.to_rgb(img)
                 img = img[:, :, 0:3]
-
-                print('=' * 30)
-                print(img.ndim, img.shape)
+                # print("Ndim: %d" % img.ndim)
+                # print("Shape: %d" % img.shape)
 
                 bounding_boxes, _ = align.detect_face.detect_face(
                     img, minsize, pnet, rnet, onet, threshold, factor
                 )
-                print(bounding_boxes)
                 nrof_faces = bounding_boxes.shape[0]
-                print(nrof_faces)
                 if nrof_faces > 0:
                     det = bounding_boxes[:, 0:4]
                     det_arr = []
@@ -100,7 +93,6 @@ def main(args):
                     else:
                         det_arr.append(np.squeeze(det))
 
-                    print("det_arr", det_arr)
                     for i, det in enumerate(det_arr):
                         det = np.squeeze(det)
                         bb = np.zeros(4, dtype=np.int32)
@@ -111,16 +103,19 @@ def main(args):
                         bb[3] = np.minimum(
                             det[3] + args.margin / 2, img_size[0])
 
-                        # RUN
+                        # CROP IMAGE
+                        print(">>> Resize image")
                         img_croped = misc.imresize(
                             img[bb[1]:bb[3], bb[0]:bb[2], :],
                             (args.image_size, args.image_size),
                             interp='bilinear'
-                        )  # .reshape(1, 160, 160, 3)
+                        )
                         img_croped = facenet.load_test_web_data(
                             img_croped,
                             False, False, args.image_size
                         )
+                        # RUN
+                        print(">>> Feed dict")
                         feed_dict = {
                             images_placeholder: img_croped,  # ndarray
                             phase_train_placeholder: False
@@ -128,7 +123,7 @@ def main(args):
                         emb_array = sess.run(
                             embeddings, feed_dict=feed_dict
                         )
-                        print(emb_array)
+                        # print(emb_array)
 
                         nrof_successfully_aligned += 1
 
@@ -142,19 +137,61 @@ def main(args):
                             (0, 0, 255)
                         )
 
-                        # PREDICTION
-                        # emb_array = np.array(emb_array).reshape(1, -1)
-                        print("emb_array".upper())
-                        print(emb_array)
-                        print(emb_array.shape)
-                        predictions = model.predict(emb_array)
-                        print("Predictions: ", predictions[0])
-                        font = cv2.FONT_HERSHEY_DUPLEX
-                        cv2.putText(
-                            img, class_names[predictions[0]],
-                            (bb[0] + 6, bb[3] - 6), font,
-                            1.0, (255, 255, 255), 1
+                        print("\t>>> Embed shape: ", emb_array.shape)
+                        distances, indexes = model.kneighbors(
+                            emb_array.reshape(1, -1), return_distance=True
                         )
+                        print(emb_array.tolist())
+
+                        # PREDICTION
+                        predictions = model.predict(emb_array)
+                        print("\t>>> Index (non threshold): ",
+                              class_names[predictions[0]])
+                        print("\t>>> Predictions (non threshold): ",
+                              predictions[0]
+                              )
+
+                        checked = any(d < CONST_DIST for d in distances[0])
+                        print("\t>>> Distance: ", distances[0])
+                        font = cv2.FONT_HERSHEY_DUPLEX
+                        if checked:
+                            # max_dist = np.argmin(distances[0])
+                            # class_name = \
+                            #     class_names[labels[indexes[0][max_dist]]]
+                            # cv2.putText(
+                            #     img, "{} ".format(i) + class_name,
+                            #     (bb[0] + 6, bb[3] - 6), font,
+                            #     1.0, (255, 255, 255), 1
+                            # )
+                            cv2.putText(
+                                img,
+                                "{} ".format(i) + class_names[predictions[0]],
+                                (bb[0] + 6, bb[3] - 6), font,
+                                1.0, (255, 255, 255), 1
+                            )
+                            print("\t>>> Label: %s" %
+                                  class_names[predictions[0]])
+                        else:
+                            cv2.putText(
+                                img, "{} ".format(i) + "---",
+                                (bb[0] + 6, bb[3] - 6), font,
+                                1.0, (255, 255, 255), 1
+                            )
+                            print("\t>>> Label: %s" % "Unknown")
+
+                        # emb_array = np.array(emb_array).reshape(1, -1)
+                        # print(">>> Prediction")
+
+                        # predictions = model.predict(emb_array)
+                        # print("Predictions: ", predictions[0])
+                        # font = cv2.FONT_HERSHEY_DUPLEX
+                        # cv2.putText(
+                        #     img, class_names[predictions[0]],
+                        #     (bb[0] + 6, bb[3] - 6), font,
+                        #     1.0, (255, 255, 255), 1
+                        # )
+                        # print("Label: %s" % class_names[predictions[0]])
+
                         del img_croped, emb_array
                     del det, det_arr
                 else:
@@ -175,7 +212,7 @@ def parse_arguments(argv):
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        '--model', type=str,
+        '--model_trained', type=str,
         help='Link to model trained'
     )
     parser.add_argument(
@@ -213,10 +250,6 @@ def parse_arguments(argv):
     parser.add_argument(
         '--detect_multiple_faces', type=bool,
         help='Detect and align multiple faces per image.', default=False
-    )
-    parser.add_argument(
-        '--use_webcam', type=bool,
-        help='Use webcam to detect face realtime', default=False
     )
     return parser.parse_args(argv)
 
